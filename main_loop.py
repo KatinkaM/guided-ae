@@ -10,7 +10,7 @@ import time
 from scripts.calculate_results import calculate_AUC
 
 
-data_path = "C:/Users/katin/Documents/NTNU/Semester_10/AUTO-AD-test/data/KPCA_data"
+data_path = "C:/Users/katin/Documents/NTNU/Semester_10//data/KPCA_data"
 dtype = torch.FloatTensor
 
 residual_root_path = "./results/detection_testing_2"
