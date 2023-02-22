@@ -128,9 +128,7 @@ def skip(
         downsample_mode (string): 'stride|avg|max|lanczos2' (default: 'stride')
 
     """
-    # assert len(num_channels_down) == len(num_channels_up) == len(
-    #     num_channels_skip)  # check that these have the same value
-    # # [128,128,128,128,128]
+   
 
     n_scales = len(num_channels_down)  # 5
 
@@ -181,19 +179,20 @@ def skip(
         # This is block 2 first iteration, block 5 second (B is changed to 128 after first layer)
         deeper.add(conv(input_depth, num_channels_down[i], filter_size_down[i],
                    filter_skip_size, bias=need_bias, pad=pad, downsample_mode=downsample_mode[i]))
-        # bn(128)
+        if i == 2:
+            deeper.register_forward_hook(change_image_code_output())
+        bn(128)
         deeper.add(bn(num_channels_down[i]))
         # Activation = leaky relu
         deeper.add(act(act_fun))
 
         # This is block 3
-        # conv(128-128,3, stride  = 1, bias = true)
-        deeper.add(conv(num_channels_down[i], num_channels_down[i],
-                   filter_size_down[i], bias=need_bias, pad=pad))
-        if i == 2:
-            deeper.register_forward_hook(change_image_code_output())
-        deeper.add(bn(num_channels_down[i]))
-        deeper.add(act(act_fun))
+        # deeper.add(conv(num_channels_down[i], num_channels_down[i],
+        #            filter_size_down[i], bias=need_bias, pad=pad))
+        # if i == 2:
+        #     deeper.register_forward_hook(change_image_code_output())
+        # deeper.add(bn(num_channels_down[i]))
+        # deeper.add(act(act_fun))
 
         # Trying to add all the outputs so I can track them!!
         navn = "B3" + str(i)
@@ -221,13 +220,14 @@ def skip(
         model_tmp.add(bn(num_channels_up[i]))
         model_tmp.add(act(act_fun))
 
-        # Block 4
+        # Block 4 -> just the same could remove
         # conv(128,128,1) +bn + LeakyRelu
-        if need1x1_up:  # Always true
-            model_tmp.add(
-                conv(num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad))
-            model_tmp.add(bn(num_channels_up[i]))
-            model_tmp.add(act(act_fun))
+
+        # if need1x1_up:  # Always true
+        #     model_tmp.add(
+        #         conv(num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad))
+        #     model_tmp.add(bn(num_channels_up[i]))
+        #     model_tmp.add(act(act_fun))
 
         # After the first iteration the Block1 = Block 4 and Block2 = Bloack 5
         input_depth = num_channels_down[i]

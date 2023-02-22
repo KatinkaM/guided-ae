@@ -18,7 +18,7 @@ def calculate_AUC(image, abu_image):
     #Calculatin AUC score 
     gt = sio.loadmat(abu)['map'][:100,:100] #When using KPCA I have to do this!!!!
 
-    back = np.transpose(sio.loadmat( image)['background'])
+    back = sio.loadmat( image)['background']
     print(back.shape)
     back = back[:,:,0]
 
@@ -63,5 +63,5 @@ def calculate_AUC(image, abu_image):
 
 
 residual_root_path = "./results/detection_testing_2"
-abu = "abu-airport-2"
+abu = "abu-airport-1"
 calculate_AUC(residual_root_path,abu)

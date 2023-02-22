@@ -113,7 +113,7 @@ def main(abu):
         mask_var_clone = mask_varr.detach().clone()
         residual_var_clone = residual_varr.detach().clone()
 
-        if iter_num % 100 == 0 and iter_num != 0:
+        if iter_num % 100 == 0 and iter_num != 0: 
             # weighting block
             img_var_clone = img_var.detach().clone()
             net_output_clone = out.detach().clone()
@@ -176,7 +176,7 @@ def main(abu):
 
         if j == num_iter-1 or end_iter == True:  # Happens if iterations = 1000 or end it is True
             print("Number of iterations: " + str(j))
-            print("Total loss: ", loss)
+            print("Total loss: ", mean_loss)
             residual_np = residual_varr.detach().cpu().squeeze().numpy()  # resiudal variance
             residual_path = residual_root_path + ".mat"  # Go into the detection image
             end = time.time()
@@ -199,8 +199,7 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    # ,"abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
-    abu_list = ["abu-airport-2"]
+    abu_list = ["abu-airport-1" ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)
