@@ -8,10 +8,6 @@ def calculate_AUC(image, abu_image):
 
     det = sio.loadmat(image)['detection']
 
-    back_2 = sio.loadmat("background.mat")['detection']
-    plt.imshow(back_2[:,:,10])
-    plt.show()
-
     #Plotting detection map
     det = np.transpose(det)
     
@@ -19,8 +15,8 @@ def calculate_AUC(image, abu_image):
     gt = sio.loadmat(abu)['map'][:100,:100] #When using KPCA I have to do this!!!!
 
     back = sio.loadmat( image)['background']
+    back = back[0,:,:]
     print(back.shape)
-    back = back[:,:,0]
 
 
     code_32 = sio.loadmat( image)['code32']

@@ -22,25 +22,20 @@ def main(abu):
     start = time.time()
     # data input
     # **************************************************************************************************************
-    # torch.cuda.empty_cache()
 
     background_root_path = "./background"
     thres = 0.000015
-    # chanels = 32
+    iter_check_loss = 50
     abu_path = abu + ".mat"
 
     print(abu)
 
+    #*********************** Retrieving ABU dataset ************************************
     img = np.array(sio.loadmat(os.path.join(data_path, abu_path))[
                    'abu'], dtype=np.float16)  # .real
-
-    # Only use the first 100 dimensions
     img_reshape = img.reshape(img.shape[0]*img.shape[1], -1)[:, :100]
-
     img_n = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshape)
-
     img_processed = np.reshape(img_n, (img.shape[0], img.shape[1], -1))
-
     # Transpose to get the correct dimesnison for the cnn
     img_np = np.transpose(img_processed)
 
@@ -53,8 +48,7 @@ def main(abu):
     row = img_size[1]
     col = img_size[2]
 
-    # model setup
-    # **************************************************************************************************************
+    # *************************Network setup************************************************
     # 'zero' and reflection gives padding when k = 3 (p =1), need this to be able to run the code
     pad = 'reflection'
     OPT_OVER = 'net'
@@ -75,16 +69,15 @@ def main(abu):
                upsample_mode='nearest', filter_skip_size=1,
                need_sigmoid=True, need_bias=True, pad=pad, act_fun='LeakyReLU').type(dtype)
    
-    net = net.type(dtype)  # see network structure
+    net = net.type(dtype)  
 
-    # Input with input_depth as nr of channels, method is now set to
+    # Returns pytorch of size input_depth with noise type u with variance 0.1
     net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
-    # #2D and it tells us which noise should be used to fill tensor (common_utils) -> outputs Tensor with uniform noise
 
     # sums up amount of parameters
     s = sum(np.prod(list(p.size())) for p in net.parameters())
     print('Number of params: %d' % s)
-    # Loss
+    #**************************************Loss******************************************
     mse = torch.nn.MSELoss().type(dtype)
 
     img_var = img_var[None, :]
@@ -118,8 +111,7 @@ def main(abu):
             img_var_clone = img_var.detach().clone()
             net_output_clone = out.detach().clone()
             # (output-HSI)^2 reconstruction error eq (8)
-            temp = (net_output_clone[0, :] - img_var_clone[0, :]) * \
-                (net_output_clone[0, :] - img_var_clone[0, :])
+            temp = (net_output_clone[0, :] - img_var_clone[0, :]) * (net_output_clone[0, :] - img_var_clone[0, :])
             # create the map of the reconstruction errors E (9)
             residual_img = temp.sum(0)
 
@@ -146,7 +138,7 @@ def main(abu):
 
     net_input_saved = net_input.detach().clone()  # Copy the HSI with ONLY NOISE
     noise = net_input.detach().clone()  # Copy the HSI with ONLY NOISE
-    loss_np = np.zeros((1, 50), dtype=np.float32)  # Loss is vector of size 50
+    loss_np = np.zeros((1, iter_check_loss), dtype=np.float32)  # Loss is vector of size 50
     loss_last = 0
     end_iter = False
 
@@ -165,9 +157,9 @@ def main(abu):
         optimizer.step()  # Updates the parameters based on the optimizer
 
         if j >= 1:
-            index = j-int(j/50)*50
+            index = j-int(j/iter_check_loss)*iter_check_loss
             loss_np[0][index-1] = abs(loss-loss_last)
-            if j % 50 == 0:  # Check if number is dividable by 50, if so we check if loss is below a certain value. this is early stop algorithm
+            if j % iter_check_loss == 0:  # Check if number is dividable by 50, if so we check if loss is below a certain value. this is early stop algorithm
                 mean_loss = np.mean(loss_np)
                 if mean_loss < thres:
                     end_iter = True
@@ -178,6 +170,7 @@ def main(abu):
             print("Number of iterations: " + str(j))
             print("Total loss: ", mean_loss)
             residual_np = residual_varr.detach().cpu().squeeze().numpy()  # resiudal variance
+            mask_np = mask_var.detach().cpu().squeeze().numpy()
             residual_path = residual_root_path + ".mat"  # Go into the detection image
             end = time.time()
             # Retrieving value of the code
@@ -188,7 +181,7 @@ def main(abu):
 
             # save residual variance to this image
             sio.savemat(residual_path, {
-                        'detection': residual_np, 'background': background_img.transpose(1, 2, 0), 'time': end-start, 'code32': code_32, 'code30': code_30,'code62': code_62,'code60': code_60})
+                        'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32, 'code30': code_30,'code62': code_62,'code60': code_60})
 
             background_path = background_root_path + ".mat"
             # Save background image which is the output of the network
@@ -199,7 +192,7 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    abu_list = ["abu-airport-1" ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = ["abu-airport-1"]# ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)
