@@ -3,14 +3,21 @@ import torch.nn as nn
 import torch
 import numpy as np
 import scipy.io as sio
+
+
+
 dtype = torch.FloatTensor
 
 # Dictionary to hold image code
 features = {}
 activation = {}
-# map_path ="C:/Users/katin/Documents/NTNU/Semester_10/AUTO-AD-test/data/ABU_data/abu-airport-1.mat"
-# gt = sio.loadmat(map_path)['map']
-# gt_matrix = np.array([np.array([gt]*32)])
+# abu_img = "abu-urban-5"
+
+# abu_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/Gabor_data/"+abu_img+"SSIIFD.mat"
+# # map_path ="C:/Users/katin/Documents/NTNU/Semester_10/AUTO-AD-test/data/ABU_data/abu-airport-1.mat"
+# gt = sio.loadmat(abu_path)['score_SSIIFD']
+# gabor = gt.reshape(100,100,-1)
+# gt_matrix = np.array([np.array([gabor]*16)])
 # a = torch.from_numpy(gt_matrix).type(dtype)
 
 torch.autograd.set_detect_anomaly(True)
@@ -39,7 +46,7 @@ def change_image_code_output():
     Function that can be used to change the image code ouput
     """
     def hook(model, input, output):
-        return output + 0  # - a*100
+        return output#*a[:,:,:,:,0]
     return hook
 
 
@@ -72,6 +79,8 @@ def act(act_fun='LeakyReLU'):
             return nn.LeakyReLU(0.2, inplace=True)
         elif act_fun == 'ELU':
             return nn.ELU()
+        elif act_fun == 'Sigmoid':
+            return nn.Sigmoid()
         elif act_fun == 'none':
             return nn.Sequential()
         else:

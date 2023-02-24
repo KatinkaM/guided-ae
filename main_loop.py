@@ -13,7 +13,7 @@ from scripts.calculate_results import calculate_AUC
 data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/KPCA_data"
 dtype = torch.FloatTensor
 
-residual_root_path = "./results/detection_testing_2"
+residual_root_path = "./results/detection_testing"
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -73,6 +73,7 @@ def main(abu):
 
     # Returns pytorch of size input_depth with noise type u with variance 0.1
     net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
+    #net_input = img_var[None, :].detach().clone()
 
     # sums up amount of parameters
     s = sum(np.prod(list(p.size())) for p in net.parameters())
@@ -105,6 +106,7 @@ def main(abu):
 
         mask_var_clone = mask_varr.detach().clone()
         residual_var_clone = residual_varr.detach().clone()
+        image_code = features["B32"].detach().clone()
 
         if iter_num % 100 == 0 and iter_num != 0: 
             # weighting block
@@ -130,7 +132,7 @@ def main(abu):
                 mask_var_clone[0, i, :] = residual_img[:]
 
         # mask_var is the detected background
-        total_loss = mse(out * mask_var_clone, img_var * mask_var_clone)
+        total_loss = mse(out * mask_var_clone, img_var * mask_var_clone) #+ mse(image_code * mask_var_clone[:,:16,:,:], img_var[:,:16,:,:] * mask_var_clone[:,:16,:,:])
         total_loss.backward()  # Backprop
         # print("iteration: %d; loss: %f" % (iter_num+1, total_loss))
 
@@ -192,7 +194,7 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    abu_list = ["abu-airport-1"]# ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list =["abu-airport-1" ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)
