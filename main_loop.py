@@ -13,7 +13,7 @@ from scripts.calculate_results import calculate_AUC
 data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/KPCA_data"
 dtype = torch.FloatTensor
 
-residual_root_path = "./results/detection_testing"
+residual_root_path = "./detection_testing"
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -32,7 +32,7 @@ def main(abu):
 
     #*********************** Retrieving ABU dataset ************************************
     img = np.array(sio.loadmat(os.path.join(data_path, abu_path))[
-                   'abu'], dtype=np.float16)  # .real
+                   'abu'])  # .real
     img_reshape = img.reshape(img.shape[0]*img.shape[1], -1)[:, :100]
     img_n = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshape)
     img_processed = np.reshape(img_n, (img.shape[0], img.shape[1], -1))
@@ -41,6 +41,8 @@ def main(abu):
 
     # Creating tensors from the numpy.ndarray
     img_var = torch.from_numpy(img_np).type(dtype)
+
+    
 
     img_size = img_var.shape
     # Retrevieng number of bands, rows and colunms
@@ -68,6 +70,7 @@ def main(abu):
                filter_size_up=1, filter_size_down=1,
                upsample_mode='nearest', filter_skip_size=1,
                need_sigmoid=True, need_bias=True, pad=pad, act_fun='LeakyReLU').type(dtype)
+
    
     net = net.type(dtype)  
 
@@ -177,13 +180,15 @@ def main(abu):
             end = time.time()
             # Retrieving value of the code
             code_32 = features["B32"].detach().cpu().squeeze().numpy()
-            code_60 = features["B60"].detach().cpu().squeeze().numpy()
-            code_62 = features["B62"].detach().cpu().squeeze().numpy()
-            code_30 = features["B60"].detach().cpu().squeeze().numpy()
+            # code_60 = features["B60"].detach().cpu().squeeze().numpy()
+            # code_62 = features["B62"].detach().cpu().squeeze().numpy()
+            # code_30 = features["B60"].detach().cpu().squeeze().numpy()
 
             # save residual variance to this image
+            # sio.savemat(residual_path, {
+            #             'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32, 'code30': code_30,'code62': code_62,'code60': code_60})
             sio.savemat(residual_path, {
-                        'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32, 'code30': code_30,'code62': code_62,'code60': code_60})
+                        'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32})
 
             background_path = background_root_path + ".mat"
             # Save background image which is the output of the network
@@ -194,7 +199,7 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    abu_list =["abu-airport-1" ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = ["abu-airport-1" ]#,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)

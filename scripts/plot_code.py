@@ -10,7 +10,7 @@ def plot_code_image(image, abu_image):
 
     
     #Calculatin AUC score 
-    gt = sio.loadmat(abu)['map'][:100,:100] #When using KPCA I have to do this!!!!
+    gt = np.transpose(sio.loadmat(abu)['map'][:100,:100]) #When using KPCA I have to do this!!!!
 
     back = sio.loadmat( image)['background']
     back = back[0,:,:]
@@ -45,19 +45,19 @@ def plot_code_image(image, abu_image):
 
     # plot on the fourth subplot (bottom right)
     axs[1, 1].imshow(code_30)
-    axs[1, 1].set_title('Block 30')
+    axs[1, 1].set_title('Input Encoder')
 
-    axs[0, 2].imshow(code_60)
-    axs[0, 2].set_title('Block 60')
+    axs[0, 2].imshow(gt)
+    axs[0, 2].set_title('Ground truth')
 
     # plot on the fourth subplot (bottom right)
     axs[1, 2].imshow(code_62)
-    axs[1, 2].set_title('Block 62')
+    axs[1, 2].set_title('Output Decoder')
 
   
     plt.show()
 
 
 residual_root_path = "./results/detection_testing"
-abu = "abu-beach-2"
+abu = "abu-urban-5"
 plot_code_image(residual_root_path,abu)

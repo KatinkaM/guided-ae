@@ -11,7 +11,7 @@ dtype = torch.FloatTensor
 # Dictionary to hold image code
 features = {}
 activation = {}
-# abu_img = "abu-urban-5"
+# abu_img = "abu-airport-1"
 
 # abu_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/Gabor_data/"+abu_img+"SSIIFD.mat"
 # # map_path ="C:/Users/katin/Documents/NTNU/Semester_10/AUTO-AD-test/data/ABU_data/abu-airport-1.mat"
@@ -117,6 +117,8 @@ def conv(in_f, out_f, kernel_size, stride=1, bias=True, pad='zero', downsample_m
 
     convolver = nn.Conv2d(in_f, out_f, kernel_size,
                           stride, padding=0, bias=bias)
+    # convolver = nn.Conv3d(in_f, out_f, kernel_size,
+    #                        stride, padding=0, bias=bias)
     layers = filter(lambda x: x is not None, [padder, convolver, downsampler])
     return nn.Sequential(*layers)  # returns a sequence of the layers
 

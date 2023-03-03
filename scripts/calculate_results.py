@@ -21,7 +21,7 @@ def calculate_AUC(image, abu_image):
     #Calculatin AUC score 
     img_reshape = det.reshape(det.shape[0]*det.shape[1],-1)
     img_reshape = MinMaxScaler(feature_range = (0,1)).fit_transform(img_reshape)
-    gt = sio.loadmat(abu)['map'][:100,:100] #When using KPCA I have to do this!!!!
+    gt = sio.loadmat(abu)['map']#[:100,:100] #When using KPCA I have to do this!!!!
     gt = gt.reshape(gt.shape[0]*gt.shape[1])
     AUC,fpr,tpr, threshold =auc_and_roc(gt,img_reshape)
 
