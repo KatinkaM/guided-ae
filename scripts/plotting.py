@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-abu = "abu-urban-3mkpca"
+abu = "detection_testing.mat"
 
-det = sio.loadmat(abu)['map']
+det = sio.loadmat(abu)['detection']
 det = det.reshape(100,100)
 plt.figure(figsize=(5,5))
 plt.axis('off')
