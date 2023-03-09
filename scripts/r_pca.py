@@ -36,7 +36,7 @@ class R_pca:
 
     @staticmethod
     def frobenius_norm(M):
-        return np.linalg.norm(M, ord='fro')
+        return np.linalg.norm(M, ord='fro') #Euclidian norm
 
     @staticmethod
     def shrink(M, tau):

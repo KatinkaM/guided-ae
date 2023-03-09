@@ -17,24 +17,18 @@ residual_root_path = "./detection"
 background_root_path = "./background"
 
 
-
-
 def main(abu):
     start = time.time()
-    
-
     thres = 0.000015
     abu_path = abu + ".mat"
     print(abu)
   
 
     #Input AE
-    img = np.array(sio.loadmat(os.path.join(data_path, abu_path))['Y'],dtype=np.float16)  #.real
-    img = img.reshape(150,150,-1)
+    img = np.array(sio.loadmat(os.path.join(data_path, abu_path))['abu'],dtype=np.float16) 
     img_reshape = img.reshape(img.shape[0]*img.shape[1],-1)[:,:100]
 
     img_n = MinMaxScaler(feature_range = (0,1)).fit_transform(img_reshape)
-  
     img_processed = np.reshape(img_n,(img.shape[0],img.shape[1],-1))
 
 
@@ -74,9 +68,9 @@ def main(abu):
     net = net.type(dtype) # see network structure
   
     
-    #net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype) #Input with input_depth as nr of channels, method is now set to 
+    net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype) #Input with input_depth as nr of channels, method is now set to 
     # #2D and it tells us which noise should be used to fill tensor (common_utils) -> outputs Tensor with uniform noise
-    net_input = img_var[None, :].detach().clone()
+    #net_input = img_var[None, :].detach().clone()
     #sums up amount of parameters
     s  = sum(np.prod(list(p.size())) for p in net.parameters())
     print ('Number of params: %d' % s)
@@ -182,7 +176,7 @@ result_list = []
 time_list = []
 st_list = []
 if __name__ == "__main__":
-    abu_list = ['abu-beach-1','abu-beach-4']#["abu-airport-1" ,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-2", "abu-beach-3", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = [ "abu-airport-1"]#, "abu-airport-4", "abu-beach-2", "abu-beach-3", "abu-urban-3", "abu-urban-4"]# ,"abu-airport-2","abu-airport-3","abu-airport-4",'abu-beach-1',"abu-beach-2", "abu-beach-3", 'abu-beach-4',"abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         t,st = main(abu)
