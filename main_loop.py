@@ -11,6 +11,7 @@ from scripts.calculate_results import calculate_AUC
 
 
 data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/KPCA_data"
+RPCA_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/RPCA_data"
 dtype = torch.FloatTensor
 
 residual_root_path = "./detection_testing"
@@ -27,6 +28,7 @@ def main(abu):
     thres = 0.000015
     iter_check_loss = 50
     abu_path = abu + ".mat"
+    rpca_abu = abu + "S.mat"
 
     print(abu)
 
@@ -42,7 +44,18 @@ def main(abu):
     # Creating tensors from the numpy.ndarray
     img_var = torch.from_numpy(img_np).type(dtype)
 
-    
+
+    #*********************** Retrieving L ************************************
+    imgL = np.array(sio.loadmat(os.path.join(RPCA_path, rpca_abu))[
+                   'abu'])  # .real
+    img_reshapeL = imgL.reshape(imgL.shape[0]*imgL.shape[1], -1)[:, :100]
+    img_nL = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshapeL)
+    img_processedL = np.reshape(img_nL, (img.shape[0], img.shape[1], -1))
+    # Transpose to get the correct dimesnison for the cnn
+    img_npL = np.transpose(img_processedL)
+
+    # Creating tensors from the numpy.ndarray
+    img_varL = torch.from_numpy(img_npL).type(dtype)
 
     img_size = img_var.shape
     # Retrevieng number of bands, rows and colunms
@@ -75,8 +88,9 @@ def main(abu):
     net = net.type(dtype)  
 
     # Returns pytorch of size input_depth with noise type u with variance 0.1
-    net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
-    #net_input = img_var[None, :].detach().clone()
+    #net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
+
+    net_input = img_varL[None, :].detach().clone()
 
     # sums up amount of parameters
     s = sum(np.prod(list(p.size())) for p in net.parameters())
@@ -199,7 +213,7 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    abu_list = ["abu-airport-1" ]#,"abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = ['abu-urban-5']#["abu-airport-1","abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)
