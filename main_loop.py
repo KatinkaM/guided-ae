@@ -10,7 +10,7 @@ import time
 from scripts.calculate_results import calculate_AUC
 
 
-data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/KPCA_data"
+data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/ABU_data"
 dtype = torch.FloatTensor
 
 residual_root_path = "./detection_testing"
@@ -32,8 +32,8 @@ def main(abu):
 
     #*********************** Retrieving ABU dataset ************************************
     img = np.array(sio.loadmat(os.path.join(data_path, abu_path))[
-                   'abu'])  # .real
-    img_reshape = img.reshape(img.shape[0]*img.shape[1], -1)[:, :100]
+                   'data'],dtype=np.float16)  # .real
+    img_reshape = img.reshape(img.shape[0]*img.shape[1], -1)[:,:10]
     img_n = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshape)
     img_processed = np.reshape(img_n, (img.shape[0], img.shape[1], -1))
     # Transpose to get the correct dimesnison for the cnn
@@ -70,13 +70,14 @@ def main(abu):
                filter_size_up=1, filter_size_down=1,
                upsample_mode='nearest', filter_skip_size=1,
                need_sigmoid=True, need_bias=True, pad=pad, act_fun='LeakyReLU').type(dtype)
+    
 
    
     net = net.type(dtype)  
 
     # Returns pytorch of size input_depth with noise type u with variance 0.1
-    net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
-    #net_input = img_var[None, :].detach().clone()
+    #net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
+    net_input = img_var[None, :].detach().clone()
 
     # sums up amount of parameters
     s = sum(np.prod(list(p.size())) for p in net.parameters())
@@ -156,7 +157,7 @@ def main(abu):
 
     for j in range(num_iter):  # iterate 1001 times
         optimizer.zero_grad()  # Sets gradients of all optimizers to zero
-
+        print("Iteration nr: ", j)
         mask_var, residual_varr, background_img, loss = closure(
             j, mask_var, residual_varr)
         optimizer.step()  # Updates the parameters based on the optimizer
@@ -180,20 +181,10 @@ def main(abu):
             end = time.time()
             # Retrieving value of the code
             code_32 = features["B32"].detach().cpu().squeeze().numpy()
-            # code_60 = features["B60"].detach().cpu().squeeze().numpy()
-            # code_62 = features["B62"].detach().cpu().squeeze().numpy()
-            # code_30 = features["B60"].detach().cpu().squeeze().numpy()
-
-            # save residual variance to this image
-            # sio.savemat(residual_path, {
-            #             'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32, 'code30': code_30,'code62': code_62,'code60': code_60})
+            
             sio.savemat(residual_path, {
                         'detection': residual_np, 'background': mask_np, 'time': end-start, 'code32': code_32})
 
-            background_path = background_root_path + ".mat"
-            # Save background image which is the output of the network
-            sio.savemat(background_path, {
-                        'detection': background_img.transpose(1, 2, 0)})
             return
 
 

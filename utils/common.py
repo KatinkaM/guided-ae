@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 import numpy as np
 import scipy.io as sio
-
+from GaborNet.GaborNet.GaborLayer import GaborConv2d
 
 
 dtype = torch.FloatTensor
@@ -109,19 +109,16 @@ def conv(in_f, out_f, kernel_size, stride=1, bias=True, pad='zero', downsample_m
 
     # This function is useless... it only returns the convolution filter
 
-    # #to_pad = int((kernel_size - 1) / 2) #If k = 1, then to_pad = 0.0, if k = 3, then to_pad = 1.0
-    # if pad == 'reflection': #Sets padding to zero
-    #     to_pad=0
-    #     padder = nn.ReflectionPad2d(to_pad) #Creates some kind of pad
-    #     to_pad = 0
+    to_pad = int((kernel_size - 1) / 2) #If k = 1, then to_pad = 0.0, if k = 3, then to_pad = 1.0
+    if pad == 'reflection': #Sets padding to zero
+        padder = nn.ReflectionPad2d(to_pad) #Creates some kind of pad
+        to_pad = 0
 
     convolver = nn.Conv2d(in_f, out_f, kernel_size,
-                          stride, padding=0, bias=bias)
-    # convolver = nn.Conv3d(in_f, out_f, kernel_size,
-    #                        stride, padding=0, bias=bias)
+                          stride, padding=to_pad, bias=bias)
+    
     layers = filter(lambda x: x is not None, [padder, convolver, downsampler])
     return nn.Sequential(*layers)  # returns a sequence of the layers
-
 
 def skip(
         num_input_channels=2, num_output_channels=3,
@@ -189,21 +186,11 @@ def skip(
 
         # This is block 2 first iteration, block 5 second (B is changed to 128 after first layer)
         deeper.add(conv(input_depth, num_channels_down[i], filter_size_down[i],
-                   filter_skip_size, bias=need_bias, pad=pad, downsample_mode=downsample_mode[i]))
-        if i == 2:
-            deeper.register_forward_hook(change_image_code_output())
-        bn(128)
+                    filter_skip_size, bias=need_bias, pad=pad, downsample_mode=downsample_mode[i]))
+        deeper.register_forward_hook(get_features('code'))
         deeper.add(bn(num_channels_down[i]))
         # Activation = leaky relu
         deeper.add(act(act_fun))
-
-        # This is block 3
-        # deeper.add(conv(num_channels_down[i], num_channels_down[i],
-        #            filter_size_down[i], bias=need_bias, pad=pad))
-        # if i == 2:
-        #     deeper.register_forward_hook(change_image_code_output())
-        # deeper.add(bn(num_channels_down[i]))
-        # deeper.add(act(act_fun))
 
         # Trying to add all the outputs so I can track them!!
         navn = "B3" + str(i)
@@ -218,9 +205,6 @@ def skip(
             deeper.add(deeper_main)
             k = num_channels_up[i + 1]
 
-        # Upsampling happens at decoder
-        # deeper.add(nn.Upsample(scale_factor=2, mode=upsample_mode[i]))
-        # deeper.add(nn.functional.interpolate(scale_factor=2, mode=upsample_mode[i]))
 
         # Block 6
         # Conv(128+128,128,3,stride = 1) + bn + LeakyRelu
@@ -231,14 +215,6 @@ def skip(
         model_tmp.add(bn(num_channels_up[i]))
         model_tmp.add(act(act_fun))
 
-        # Block 4 -> just the same could remove
-        # conv(128,128,1) +bn + LeakyRelu
-
-        # if need1x1_up:  # Always true
-        #     model_tmp.add(
-        #         conv(num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad))
-        #     model_tmp.add(bn(num_channels_up[i]))
-        #     model_tmp.add(act(act_fun))
 
         # After the first iteration the Block1 = Block 4 and Block2 = Bloack 5
         input_depth = num_channels_down[i]
@@ -246,7 +222,6 @@ def skip(
 
     # This after the other part of the net is finished
     # Block 7
-    # conv(128,B,1) + sigmoid
     model.add(
         conv(num_channels_up[0], num_output_channels, 1, bias=need_bias, pad=pad))
     if need_sigmoid:

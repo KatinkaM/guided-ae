@@ -7,16 +7,12 @@ import matplotlib.pyplot as plt
 
 def calculate_AUC(image, abu_image):
     abu = "C:/Users/katin/Documents/NTNU/Semester_10/data/ABU_data/"+abu_image + ".mat"
-
+    
     det = sio.loadmat(image)['detection']
     time = str(sio.loadmat(image)['time'][0][0])
 
-
-    #Plotting detection map
     det = np.transpose(det)
-    #plt.plot(det)
-    # plt.imshow(det)
-    # plt.show()
+
 
     #Calculatin AUC score 
     img_reshape = det.reshape(det.shape[0]*det.shape[1],-1)
@@ -28,15 +24,4 @@ def calculate_AUC(image, abu_image):
     print("AUC score: " + str(AUC))
     print("Processing time: " ,time)
     return AUC
-#Finding code
-    # code = sio.loadmat( image)['code']
-    # code_1 = code[2,:,:]
-    # plt.imshow(code_1)
-    # plt.show()
-
-    # code = sio.loadmat( image)['code2']
-    # code_1 = code[2,:,:]
-    # plt.imshow(code_1)
-    # plt.show()
-    # print("Shape of code: ", str(code.shape))
 

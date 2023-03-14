@@ -1,63 +1,68 @@
 import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn import metrics
+
+a = "abu-urban-5"
 
 
-def plot_code_image(image, abu_image):
-    abu = "C:/Users/katin/Documents/NTNU/Semester_10/data/ABU_data/"+abu_image + ".mat"
+AE = "normalNet"+a+ ".mat"
+Gabor = "gab" + a + ".mat"
 
-    det = sio.loadmat(image)['detection']
+abu = "C:/Users/katin/Documents/NTNU/Semester_10/data/ABU_data/abu-airport-1.mat"
+AUC_list = []
 
-    
-    #Calculatin AUC score 
-    gt = np.transpose(sio.loadmat(abu)['map'][:100,:100]) #When using KPCA I have to do this!!!!
+code_AE = np.transpose(sio.loadmat(AE)['code'])
+code_Gabor = np.transpose(sio.loadmat(Gabor)['code'])
 
-    back = sio.loadmat( image)['background']
-    back = back[0,:,:]
-    print(back.shape)
+det_AE = np.transpose(sio.loadmat(AE)['detection'])
+det_Gabor = np.transpose(sio.loadmat(Gabor)['detection'])
 
+back_AE = np.transpose(sio.loadmat(AE)['background'])
+back_Gabor = np.transpose(sio.loadmat(Gabor)['background'])
 
-    code_32 = sio.loadmat( image)['code32']
-    
-    code_32 = code_32[0,:,:]
+# fig, axs = plt.subplots(nrows=1, ncols=2)
 
-    code_60 = sio.loadmat( image)['code60']
-    code_60 = code_60[0,:,:]
+# AUC_GAB = sio.loadmat(Gabor)['auc_scores']
+# AUC_Norm = sio.loadmat(AE)['auc_scores']
 
-    code_62 = sio.loadmat( image)['code62']
-    code_62 = code_62[0,:,:]
-    
-    code_30 = sio.loadmat( image)['code30']
-    code_30 = code_30[0,:,:]
-  
-    
-    fig, axs = plt.subplots(nrows=2, ncols=3)
-    axs[0, 0].imshow(back)
-    axs[0, 0].set_title('Background')
+# # Plot matrix a in the first subplot
+# axs[0].plot(AUC_Norm[0])
+# axs[0].set_title('Linear AUC')
 
-    # plot on the second subplot (top right)
-    axs[0, 1].imshow(det)
-    axs[0, 1].set_title('Detection Map')
+# # Plot matrix b in the second subplot
+# axs[1].plot(AUC_GAB[0])
+# axs[1].set_title('Gabor AUC')
+# plt.show()
 
-    # plot on the third subplot (bottom left)
-    axs[1, 0].imshow(code_32)
-    axs[1, 0].set_title('Image Code')
+fig, axs = plt.subplots(nrows=3, ncols=2)
 
-    # plot on the fourth subplot (bottom right)
-    axs[1, 1].imshow(code_30)
-    axs[1, 1].set_title('Input Encoder')
+# Plot matrix a in the first subplot
+axs[0,0].imshow(code_AE[:,:,0], cmap='jet')
+axs[0,0].set_title('Linear conv code')
 
-    axs[0, 2].imshow(gt)
-    axs[0, 2].set_title('Ground truth')
+# Plot matrix b in the second subplot
+axs[0,1].imshow(code_Gabor[:,:,0], cmap='jet')
+axs[0,1].set_title('Gabor conv code')
 
-    # plot on the fourth subplot (bottom right)
-    axs[1, 2].imshow(code_62)
-    axs[1, 2].set_title('Output Decoder')
+axs[1,0].imshow(det_AE, cmap='jet')
+axs[1,0].set_title('Linear conv det')
 
-  
-    plt.show()
+# Plot matrix b in the second subplot
+axs[1,1].imshow(det_Gabor, cmap='jet')
+axs[1,1].set_title('Gabor conv det')
+
+axs[2,0].imshow(back_AE[:,:,0], cmap='jet')
+axs[2,0].set_title('Linear conv background')
+
+# Plot matrix b in the second subplot
+axs[2,1].imshow(back_Gabor[:,:,0], cmap='jet')
+axs[2,1].set_title('Gabor conv background')
 
 
-residual_root_path = "./results/detection_testing"
-abu = "abu-urban-5"
-plot_code_image(residual_root_path,abu)
+
+for ax in axs.flat:
+    ax.axis('off')
+
+plt.show()
