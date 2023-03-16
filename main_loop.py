@@ -11,7 +11,7 @@ from scripts.calculate_results import calculate_AUC
 
 
 data_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/KPCA_data"
-RPCA_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/RPCA_data"
+# RPCA_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/RPCA_data"
 dtype = torch.FloatTensor
 
 residual_root_path = "./detection_testing"
@@ -28,7 +28,7 @@ def main(abu):
     thres = 0.000015
     iter_check_loss = 50
     abu_path = abu + ".mat"
-    rpca_abu = abu + "S.mat"
+    # rpca_abu = abu + "S.mat"
 
     print(abu)
 
@@ -45,23 +45,30 @@ def main(abu):
     img_var = torch.from_numpy(img_np).type(dtype)
 
 
-    #*********************** Retrieving L ************************************
-    imgL = np.array(sio.loadmat(os.path.join(RPCA_path, rpca_abu))[
-                   'abu'])  # .real
-    img_reshapeL = imgL.reshape(imgL.shape[0]*imgL.shape[1], -1)[:, :100]
-    img_nL = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshapeL)
-    img_processedL = np.reshape(img_nL, (img.shape[0], img.shape[1], -1))
-    # Transpose to get the correct dimesnison for the cnn
-    img_npL = np.transpose(img_processedL)
+    rpca_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/RPCA_data/"+abu+"S.mat"
+    L = np.transpose(sio.loadmat(rpca_path)['abu'].sum(2))
+    L_matrix = np.array(np.array([[L]*16]))
+    image_c = torch.from_numpy(L_matrix).type(dtype)
+    # image_c = 0
 
-    # Creating tensors from the numpy.ndarray
-    img_varL = torch.from_numpy(img_npL).type(dtype)
+    #*********************** Retrieving L ************************************
+    # imgL = np.array(sio.loadmat(os.path.join(RPCA_path, rpca_abu))[
+    #                'abu'])  # .real
+    # img_reshapeL = imgL.reshape(imgL.shape[0]*imgL.shape[1], -1)[:, :100]
+    # img_nL = MinMaxScaler(feature_range=(0, 1)).fit_transform(img_reshapeL)
+    # img_processedL = np.reshape(img_nL, (img.shape[0], img.shape[1], -1))
+    # # Transpose to get the correct dimesnison for the cnn
+    # img_npL = np.transpose(img_processedL)
+
+    # # Creating tensors from the numpy.ndarray
+    # img_varL = torch.from_numpy(img_npL).type(dtype)
 
     img_size = img_var.shape
     # Retrevieng number of bands, rows and colunms
     band = img_size[0]
     row = img_size[1]
     col = img_size[2]
+    N = col*row
 
     # *************************Network setup************************************************
     # 'zero' and reflection gives padding when k = 3 (p =1), need this to be able to run the code
@@ -76,7 +83,7 @@ def main(abu):
     param_noise = False
     reg_noise_std = 0.1  # 0 0.01 0.03 0.05
     # skip from models library file - > should assemble encoder-decoder with skip connects
-    net = skip(input_depth, output_depth,
+    net = skip(image_c,input_depth, output_depth,
                num_channels_down=[64, 32, 16],
                num_channels_up=[64, 32, 16],
                num_channels_skip=[64, 32, 16],
@@ -90,7 +97,7 @@ def main(abu):
     # Returns pytorch of size input_depth with noise type u with variance 0.1
     #net_input = get_noise(input_depth, method, img_np.shape[1:]).type(dtype)
 
-    net_input = img_varL[None, :].detach().clone()
+    net_input = img_var[None, :].detach().clone()
 
     # sums up amount of parameters
     s = sum(np.prod(list(p.size())) for p in net.parameters())
@@ -125,7 +132,7 @@ def main(abu):
         residual_var_clone = residual_varr.detach().clone()
         image_code = features["B32"].detach().clone()
 
-        if iter_num % 100 == 0 and iter_num != 0: 
+        if iter_num % 10 == 0 and iter_num != 0: 
             # weighting block
             img_var_clone = img_var.detach().clone()
             net_output_clone = out.detach().clone()
@@ -147,7 +154,6 @@ def main(abu):
             # iterate trough the resiudal image and add in mask_var_clone which is the variance
             for i in range(mask_size[1]):
                 mask_var_clone[0, i, :] = residual_img[:]
-
         # mask_var is the detected background
         total_loss = mse(out * mask_var_clone, img_var * mask_var_clone) #+ mse(image_code * mask_var_clone[:,:16,:,:], img_var[:,:16,:,:] * mask_var_clone[:,:16,:,:])
         total_loss.backward()  # Backprop
@@ -190,7 +196,7 @@ def main(abu):
             print("Total loss: ", mean_loss)
             residual_np = residual_varr.detach().cpu().squeeze().numpy()  # resiudal variance
             mask_np = mask_var.detach().cpu().squeeze().numpy()
-            residual_path = residual_root_path + ".mat"  # Go into the detection image
+            residual_path = residual_root_path + abu +  ".mat"  # Go into the detection image
             end = time.time()
             # Retrieving value of the code
             code_32 = features["B32"].detach().cpu().squeeze().numpy()
@@ -213,9 +219,10 @@ def main(abu):
 
 result_list = []
 if __name__ == "__main__":
-    abu_list = ['abu-urban-5']#["abu-airport-1","abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = ["abu-airport-1","abu-airport-2","abu-airport-3","abu-airport-4","abu-beach-1","abu-beach-2", "abu-beach-3","abu-beach-4", "abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         main(abu)
-        result_list.append(calculate_AUC(residual_root_path, abu))
+        r = residual_root_path + abu + ".mat"
+        result_list.append(calculate_AUC(r, abu))
     print(result_list)

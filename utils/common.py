@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 import numpy as np
 import scipy.io as sio
-
+# from run_main import abu
 
 
 dtype = torch.FloatTensor
@@ -11,14 +11,12 @@ dtype = torch.FloatTensor
 # Dictionary to hold image code
 features = {}
 activation = {}
-# abu_img = "abu-airport-1"
+abu_img = "abu-urban-5"
 
-# abu_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/Gabor_data/"+abu_img+"SSIIFD.mat"
-# # map_path ="C:/Users/katin/Documents/NTNU/Semester_10/AUTO-AD-test/data/ABU_data/abu-airport-1.mat"
-# gt = sio.loadmat(abu_path)['score_SSIIFD']
-# gabor = gt.reshape(100,100,-1)
-# gt_matrix = np.array([np.array([gabor]*16)])
-# a = torch.from_numpy(gt_matrix).type(dtype)
+abu_path = "C:/Users/katin/Documents/NTNU/Semester_10/data/RPCA_data/"+abu_img+"S.mat"
+gt = np.transpose(sio.loadmat(abu_path)['abu'].sum(2))
+gt_matrix = np.array(np.array([[gt]*16]))
+a = torch.from_numpy(gt_matrix).type(dtype)
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -41,12 +39,12 @@ def get_features(name):
     return hook
 
 
-def change_image_code_output():
+def change_image_code_output(a):
     """
     Function that can be used to change the image code ouput
     """
     def hook(model, input, output):
-        return output#*a[:,:,:,:,0]
+        return output*a[:,:,:,:]
     return hook
 
 
@@ -124,7 +122,7 @@ def conv(in_f, out_f, kernel_size, stride=1, bias=True, pad='zero', downsample_m
 
 
 def skip(
-        num_input_channels=2, num_output_channels=3,
+        image_c, num_input_channels=2, num_output_channels=3,
         num_channels_down=[16, 32, 64, 128, 128], num_channels_up=[16, 32, 64, 128, 128], num_channels_skip=[4, 4, 4, 4, 4],
         filter_size_down=1, filter_size_up=1, filter_skip_size=1,
         need_sigmoid=True, need_bias=True,
@@ -190,8 +188,8 @@ def skip(
         # This is block 2 first iteration, block 5 second (B is changed to 128 after first layer)
         deeper.add(conv(input_depth, num_channels_down[i], filter_size_down[i],
                    filter_skip_size, bias=need_bias, pad=pad, downsample_mode=downsample_mode[i]))
-        if i == 2:
-            deeper.register_forward_hook(change_image_code_output())
+        if (i == 2 ) :
+            deeper.register_forward_hook(change_image_code_output(image_c))
         bn(128)
         deeper.add(bn(num_channels_down[i]))
         # Activation = leaky relu
