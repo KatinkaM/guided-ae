@@ -3,7 +3,7 @@ import torch
 import scipy.io as sio
 from sklearn.preprocessing import MinMaxScaler
 import os
-from utils.common import skip
+from utils.common import skip,features
 from utils.common_utils import get_noise, get_params
 import time
 
@@ -176,7 +176,7 @@ result_list = []
 time_list = []
 st_list = []
 if __name__ == "__main__":
-    abu_list = [ "abu-airport-1"]#, "abu-airport-4", "abu-beach-2", "abu-beach-3", "abu-urban-3", "abu-urban-4"]# ,"abu-airport-2","abu-airport-3","abu-airport-4",'abu-beach-1',"abu-beach-2", "abu-beach-3", 'abu-beach-4',"abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
+    abu_list = [ "abu-airport-1","abu-airport-2","abu-airport-3","abu-airport-4",'abu-beach-1',"abu-beach-2", "abu-beach-3", 'abu-beach-4',"abu-urban-1", "abu-urban-2", "abu-urban-3", "abu-urban-4", "abu-urban-5"]
     for i in range(len(abu_list)):
         abu = abu_list[i]
         t,st = main(abu)

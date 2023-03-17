@@ -158,18 +158,6 @@ def skip(
         #Activation = leaky relu
         deeper.add(act(act_fun))
 
-
-        #This is block 3
-        #conv(128-128,3, stride  = 1, bias = true)
-        # deeper.add(conv(num_channels_down[i], num_channels_down[i], filter_size_down[i], bias=need_bias, pad=pad))
-        # deeper.add(bn(num_channels_down[i]))
-        # deeper.add(act(act_fun))
-        
-        #Trying to add all the outputs so I can track them!! 
-        # navn = "B3" + str(i)
-        # deeper.register_forward_hook(get_features(navn))
-        #The code must be here at some point! 
-
         deeper_main = nn.Sequential()
 
         #k is always set to 128 becausee numm_channels_up is a list of only elements = 128
@@ -177,10 +165,11 @@ def skip(
             k = num_channels_down[i]
         else:
             deeper.add(deeper_main)
-            k = num_channels_up[i + 1]
+            k = num_channels_up[i+1]
 
         #Upsampling happens at decoder
         deeper.add(nn.Upsample(scale_factor=2, mode=upsample_mode[i]))
+
         #deeper.add(nn.functional.interpolate(scale_factor=2, mode=upsample_mode[i]))
 
         #Block 6
@@ -188,13 +177,6 @@ def skip(
         model_tmp.add(conv(num_channels_skip[i] + k, num_channels_up[i], filter_size_up[i], 1, bias=need_bias, pad=pad))
         model_tmp.add(bn(num_channels_up[i]))
         model_tmp.add(act(act_fun))
-
-        #Block 4?
-        #conv(128,128,1) +bn + LeakyRelu
-        # if need1x1_up: #Always true
-        #     model_tmp.add(conv(num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad))
-        #     model_tmp.add(bn(num_channels_up[i]))
-        #     model_tmp.add(act(act_fun))
 
         input_depth = num_channels_down[i]#After the first iteration the Block1 = Block 4 and Block2 = Bloack 5
         model_tmp = deeper_main
